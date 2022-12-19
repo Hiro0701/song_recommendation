@@ -7,8 +7,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 
 #Variables
-sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id='63dad2b096294118b28cf733753fb84b',
-                                                           client_secret='3e2e8ba5f61b49b6ab576a4676e3f3ee'))
+sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id='',
+                                                           client_secret=''))
 song_data = pd.read_csv('data.csv')
 cluster_dic = {0: 'upbeat', 1: 'decent', 2: 'mood', 3: 'unique', 4: 'club'}
 
