@@ -2,8 +2,8 @@
 A simple song recommendation with Spotipy   
 Datasets from [Kaggle](https://www.kaggle.com/code/vatsalmavani/music-recommendation-system-using-spotify-dataset/data)
 ***
-I've made a simple song recommendation with [spotipy](https://github.com/spotipy-dev/spotipy)
-K-means was used to classify songs into 5 clusters
+I've made a simple song recommendation with [spotipy](https://github.com/spotipy-dev/spotipy)    
+K-means was used to classify songs into 5 clusters (upbeat, decent, mood, unique, club)    
 Function takes \[song,artist,released date\] and number of recommended songs as inputs
 ```python
 if __name__ == '__main__':
