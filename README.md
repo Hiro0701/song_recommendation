@@ -8,7 +8,9 @@ if __name__ == '__main__':
 ```
 ```
 Please enter your favorite songs: light switch/charlie puth/2022/levitating/dua lipa/2020
-How many songs do you want to get?: 
+#Format of <title/artist/release date> and takes multiple songs
+How many songs do you want to get?:
+#Default number is 10
 It seems like you usually listen to mood!
 Here's some songs for you: 
 mood :
