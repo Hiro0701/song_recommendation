@@ -6,6 +6,7 @@ Datasets from [Kaggle](https://www.kaggle.com/code/vatsalmavani/music-recommenda
 if __name__ == '__main__':
     print_songs()
 ```
+```
 Please enter your favorite songs: light switch/charlie puth/2022/levitating/dua lipa/2020
 How many songs do you want to get?: 
 It seems like you usually listen to mood!
