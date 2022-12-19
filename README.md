@@ -1,5 +1,5 @@
 # spotify
-A simple song recommendation with Spotipy
+A simple song recommendation with Spotipy   
 Datasets from [Kaggle](https://www.kaggle.com/code/vatsalmavani/music-recommendation-system-using-spotify-dataset/data)
 ***
 ```python
