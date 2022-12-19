@@ -2,13 +2,16 @@
 A simple song recommendation with Spotipy   
 Datasets from [Kaggle](https://www.kaggle.com/code/vatsalmavani/music-recommendation-system-using-spotify-dataset/data)
 ***
+I've made a simple song recommendation with [spotipy](https://github.com/spotipy-dev/spotipy)
+K-means was used to classify songs into 5 clusters
+Function takes \[song,artist,released date\] and number of recommended songs as inputs
 ```python
 if __name__ == '__main__':
     print_songs()
 ```
 ```
-Please enter your favorite songs: light switch/charlie puth/2022/levitating/dua lipa/2020
-#Format of <title/artist/release date> and takes multiple songs
+Please enter your favorite songs: **light switch/charlie puth/2022/levitating/dua lipa/2020**
+#Format of <title/artist/released date> and takes multiple songs
 How many songs do you want to get?:
 #Default number is 10
 It seems like you usually listen to mood!
