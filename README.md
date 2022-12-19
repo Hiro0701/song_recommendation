@@ -10,9 +10,9 @@ if __name__ == '__main__':
     print_songs()
 ```
 ```
-Please enter your favorite songs: **light switch/charlie puth/2022/levitating/dua lipa/2020**
+Please enter your favorite songs: light switch/charlie puth/2022/levitating/dua lipa/2020
 #Format of <title/artist/released date> and takes multiple songs
-How many songs do you want to get?:
+How many songs do you want to get?: 10
 #Default number is 10
 It seems like you usually listen to mood!
 Here's some songs for you: 
