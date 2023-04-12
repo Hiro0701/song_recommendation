@@ -140,8 +140,3 @@ class spotify:
         recommended_songs = self.recommend_songs(cluster_idx, song_data, song_labeled, n)
 
         return recommended_songs
-
-
-myspoty = spotify('63dad2b096294118b28cf733753fb84b', '3e2e8ba5f61b49b6ab576a4676e3f3ee')
-
-print(myspoty.recommend('data.csv', 'charlie puth', 3))
