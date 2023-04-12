@@ -112,7 +112,7 @@ class spotify:
         return cluster_idx
 
     # Recommend n songs by cluster index
-    def recommend_songs(self, cluster_idx, song_data, song_labeled, n=10):
+    def recommend_songs(self, cluster_idx, song_data, song_labeled, n):
         recommended_songs = {}
 
         for i in cluster_idx:
@@ -130,18 +130,18 @@ class spotify:
         return recommended_songs
 
     # Final product
-    def recommend(self, path, artist):
+    def recommend(self, path, artist, n=10):
         song_data = self.get_song_data(path)
         song_data_feature = self.retrieve_song_feature(song_data)
         pipeline = self.train_pipeline(song_data_feature)
         song_labeled = self.label_songs(song_data_feature, pipeline)
         song = self.search_by_artist(artist)
         cluster_idx = self.get_recommended_cluster([artist], pipeline)
-        recommended_songs = self.recommend_songs(cluster_idx, song_data, song_labeled)
+        recommended_songs = self.recommend_songs(cluster_idx, song_data, song_labeled, n)
 
         return recommended_songs
 
 
 myspoty = spotify('63dad2b096294118b28cf733753fb84b', '3e2e8ba5f61b49b6ab576a4676e3f3ee')
 
-print(myspoty.recommend('data.csv', 'charlie puth'))
+print(myspoty.recommend('data.csv', 'charlie puth', 3))
