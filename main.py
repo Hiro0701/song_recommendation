@@ -6,128 +6,142 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 
-#Variables
-sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id='63dad2b096294118b28cf733753fb84b',
-                                                           client_secret='3e2e8ba5f61b49b6ab576a4676e3f3ee'))
-song_data = pd.read_csv('data.csv')
-cluster_dic = {0: 'upbeat', 1: 'decent', 2: 'mood', 3: 'unique', 4: 'club'}
 
-#Data processing
-def song_process(song_data):
-    song_features = song_data[
-        ['valence', 'year', 'acousticness', 'danceability', 'energy', 'instrumentalness', 'loudness', 'popularity',
-         'speechiness', 'tempo']]
+class spotify:
+    def __init__(self, client_id, client_secret):
+        self.spotify_api = spotipy.Spotify(auth_manager=SpotifyClientCredentials(
+            client_id=client_id,
+            client_secret=client_secret)
+        )
+        self.cluster_dic = {0: 'upbeat', 1: 'decent', 2: 'mood', 3: 'unique', 4: 'club'}
 
-    return song_features
+    # Get song data
+    def get_song_data(self, path):
+        try:
+            song_data = pd.read_csv(path)
 
-#Machine Learning
-def song_fitting(song):
-    pipeline = Pipeline([('scaler', StandardScaler()), ('kmeans', KMeans(n_clusters=5))])
-    pipeline.fit(song)
-    song['k_mean'] = pipeline.predict(song)
+            return song_data
 
-    return song, pipeline
+        except FileNotFoundError:
+            raise ValueError("No file found.")
 
-#Spotify search engine with spotipy
-def song_search(title, artist, year):
-    song = sp.search(q='artist:%s track:%s year:%s' % (artist, title, year), limit=1)
+    # Get song data with only useful columns
+    def retrieve_song_feature(self, song_data):
+        song_data_feature = song_data[['valence',
+                                       'year',
+                                       'acousticness',
+                                       'danceability',
+                                       'energy',
+                                       'instrumentalness',
+                                       'loudness',
+                                       'popularity',
+                                       'speechiness',
+                                       'tempo']]
 
-    if song['tracks']['items'] == []:
-        return None
+        return song_data_feature
 
-    track_id = song['tracks']['items'][0]['id']
-    features = sp.audio_features(track_id)[0]
+    # Machine learning
+    def train_pipeline(self, song_data):
+        pipeline = Pipeline([('scaler', StandardScaler()), ('kmeans', KMeans(n_clusters=5))])
+        pipeline.fit(song_data)
 
-    song_df = pd.DataFrame()
+        return pipeline
 
-    song_df['name'] = [title]
-    song_df['artist'] = [artist]
-    song_df['valence'] = features['valence']
-    song_df['year'] = [year]
-    song_df['acousticness'] = features['acousticness']
-    song_df['danceability'] = features['danceability']
-    song_df['energy'] = features['energy']
-    song_df['instrumentalness'] = features['instrumentalness']
-    song_df['loudness'] = features['loudness']
-    song_df['popularity'] = song['tracks']['items'][0]['popularity']
-    song_df['speechiness'] = features['speechiness']
-    song_df['tempo'] = features['tempo']
+    # Predict songs' classification and label them
+    def label_songs(self, song_data, pipeline):
+        song_data['k_mean'] = pipeline.predict(song_data)
 
-    return song_df
+        return song_data
 
-#Classify song into 5 clusters
-def classify_song(song, pipeline):
-    return pipeline.predict(song.iloc[:,2:])
+    # Return dataframe of average info of searched songs by artist
+    def search_by_artist(self, artist):
+        searched_songs = self.spotify_api.search(q='artist=%s' % artist)
 
-#Gives a set of recommended songs
-def recommend_song(song_datas, n=10):
-    song_df = song_search(song_datas[0][0],song_datas[0][1],song_datas[0][2])
+        # Return None if there's no song searched
+        if searched_songs['tracks']['total'] == 0:
+            raise ValueError('No song searched.')
 
-    if len(song_datas) > 1:
-        for i in range(len(song_datas)-1):
-            temp = song_search(song_datas[i+1][0],song_datas[i+1][1],song_datas[i+1][2])
-            song_df = song_df.append(temp, ignore_index=True)
+        songs_df = []
 
-    songs = song_process(song_data)
-    (song_features, pipeline) = song_fitting(songs)
+        # Get each song's data
+        for song in searched_songs['tracks']['items']:
+            track_id = song['id']
+            features = self.spotify_api.audio_features(track_id)[0]
 
-    song_classified = classify_song(song_df, pipeline)
-    song_classified_list = song_classified.tolist()
+            songs_data = {
+                'valence': features['valence'],
+                'year': song['album']['release_date'],
+                'acousticness': features['acousticness'],
+                'danceability': features['danceability'],
+                'energy': features['energy'],
+                'instrumentalness': features['instrumentalness'],
+                'loudness': features['loudness'],
+                'popularity': song['popularity'],
+                'speechiness': features['speechiness'],
+                'tempo': features['tempo'],
+            }
+            songs_df.append(songs_data)
 
-    count = []
-    for i in range(5):
-        count.append(song_classified_list.count(i))
+        songs_df = pd.DataFrame(songs_df)
+        songs_df['year'] = songs_df['year'].str[:4].astype(int)
 
-    max_val = max(count)
-    cluster_idx = [i for i, v in enumerate(count) if v == max_val]
+        # Return songs' mean values
+        song_mean = songs_df.mean(axis=0)
 
-    recommended_songs = {}
-    for i in cluster_idx:
-        sample_songs = song_features.loc[song_features['k_mean'] == i].sample(n)
-        sample_songs_idx = sample_songs.index.values
-        sample_songs = song_data.loc[sample_songs_idx]
-        sample_songs = sample_songs[['name', 'artists', 'release_date']]
+        return pd.DataFrame(song_mean).transpose()
 
-        cluster_songs = []
-        for j in sample_songs_idx:
-            cluster_songs.append(sample_songs.loc[j].tolist())
+    # Classify given song with respect to given pipeline
+    def classify_song(self, song, pipeline):
 
-        recommended_songs[i] = cluster_songs
+        return pipeline.predict(song)
 
-    return recommended_songs
+    # Get recommended cluster index
+    def get_recommended_cluster(self, artists, pipeline):
+        cluster_idx = []
 
-#Display
-def print_songs():
-    song_datas = input("Please enter your favorite songs: ").split('/')
-    n = input("How many songs do you want to get?: ")
+        for artist in artists:
+            cluster_idx.append(pipeline.predict(self.search_by_artist(artist)))
 
-    if n == '':
-        n = 10
-    else:
-        n = int(n)
+        count = []
+        for i in range(5):
+            count.append(cluster_idx.count(i))
 
-    input_len = len(song_datas)
-    if input_len == 3:
-        song_datas = [song_datas]
-    else:
-        temp = []
-        for i in range(int(input_len/3)):
-            temp.append(song_datas[i*3:i*3+3])
-        song_datas = temp
+        max_val = max(count)
+        cluster_idx = [i for i, v in enumerate(count) if v == max_val]
 
-    recommended_songs = recommend_song(song_datas, n)
-    clustered = recommended_songs.keys()
+        return cluster_idx
 
-    favorite_cluster = []
-    for i in clustered:
-        favorite_cluster.append(cluster_dic[i])
+    # Recommend n songs by cluster index
+    def recommend_songs(self, cluster_idx, song_data, song_labeled, n=10):
+        recommended_songs = {}
 
-    print('It seems like you usually listen to %s!' % (', '.join(favorite_cluster)))
-    print("Here's some songs for you: ")
-    for i in recommended_songs:
-        print(cluster_dic[i],':')
-        for j in recommended_songs[i]:
-            print(j)
+        for i in cluster_idx:
+            sample_songs = song_labeled.loc[song_labeled['k_mean'] == i].sample(n)
+            sample_songs_idx = sample_songs.index.values
+            sample_songs = song_data.loc[sample_songs_idx]
+            sample_songs = sample_songs[['name', 'artists', 'release_date']]
 
-if __name__ == '__main__':
-    print_songs()
+            cluster_songs = []
+            for j in sample_songs_idx:
+                cluster_songs.append(sample_songs.loc[j].tolist())
+
+            recommended_songs[i] = cluster_songs
+
+        return recommended_songs
+
+    # Final product
+    def recommend(self, path, artist):
+        song_data = self.get_song_data(path)
+        song_data_feature = self.retrieve_song_feature(song_data)
+        pipeline = self.train_pipeline(song_data_feature)
+        song_labeled = self.label_songs(song_data_feature, pipeline)
+        song = self.search_by_artist(artist)
+        cluster_idx = self.get_recommended_cluster([artist], pipeline)
+        recommended_songs = self.recommend_songs(cluster_idx, song_data, song_labeled)
+
+        return recommended_songs
+
+
+myspoty = spotify('63dad2b096294118b28cf733753fb84b', '3e2e8ba5f61b49b6ab576a4676e3f3ee')
+
+print(myspoty.recommend('data.csv', 'charlie puth'))
