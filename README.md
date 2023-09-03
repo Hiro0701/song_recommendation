@@ -1,3 +1,3 @@
 # song_recommendation
-Final project done in MAT4056 in Dongguk Uni., 2022
+Final project done in MAT4056 at Dongguk Uni. (2022)<br>
 Run main.py
