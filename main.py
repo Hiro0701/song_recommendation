@@ -9,19 +9,6 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 
-current_path = os.path.dirname(os.path.abspath(__file__))
-secret_file_path = os.path.join(current_path, 'secret.json')
-
-with open(secret_file_path, 'r') as secret_file:
-    secret_data = json.load(secret_file)
-    client_id = secret_data.get("client_id", None)
-    client_secret = secret_data.get("client_secret", None)
-
-spotify = spotipy.Spotify(auth_manager=SpotifyClientCredentials(
-    client_id=client_id,
-    client_secret=client_secret)
-)
-
 
 def get_song_data(path):
     try:
@@ -31,9 +18,6 @@ def get_song_data(path):
 
     except FileNotFoundError:
         raise ValueError("No file found.")
-
-
-songs = get_song_data(current_path + '/data.csv')
 
 
 def retrieve_song_features(song_data):
@@ -51,9 +35,6 @@ def retrieve_song_features(song_data):
     return song_data_features
 
 
-songs_features = retrieve_song_features(songs)
-
-
 def train_pipeline(songs_features):
     pipeline = Pipeline([('scaler', StandardScaler()), ('kmeans', KMeans(n_clusters=5))])
     pipeline.fit(songs_features)
@@ -61,18 +42,10 @@ def train_pipeline(songs_features):
     return pipeline
 
 
-pipeline = train_pipeline(songs_features)
-
-
-# joblib.dump(pipeline, 'trained_pipeline.pkl')
-
 def label_songs(songs_features, pipeline):
     songs_features['k_mean'] = pipeline.predict(songs_features)
 
     return songs_features
-
-
-labeled_songs = label_songs(songs_features, pipeline)
 
 
 def search_by_artist(artist):
@@ -129,11 +102,11 @@ def get_recommended_cluster(artists, pipeline):
     return cluster_idx[0]
 
 
-def recommend_songs(pipeline, songs, labeled_songs, n=5):
+def recommend_songs(pipeline, songs, labeled_songs):
     artists = input('Type your favorite artists with comma: ')
 
     try:
-        n = int(input('How many songs do you want to get? Default is 5: '))
+        n = int(input('How many songs do you want to get?: '))
     except ValueError:
         raise ValueError("It's not a number.")
 
@@ -156,15 +129,39 @@ def recommend_songs(pipeline, songs, labeled_songs, n=5):
     return cluster_songs, cluster_idx
 
 
-cluster_dic = {0: 'upbeat', 1: 'decent', 2: 'mood', 3: 'unique', 4: 'club'}
+if __name__ == '__main__':
+    current_path = os.path.dirname(os.path.abspath(__file__))
+    secret_file_path = os.path.join(current_path, 'secret.json')
 
-recommended_songs, cluster_idx = recommend_songs(pipeline, songs, labeled_songs, 5)
+    with open(secret_file_path, 'r') as secret_file:
+        secret_data = json.load(secret_file)
+        client_id = secret_data.get("client_id", None)
+        client_secret = secret_data.get("client_secret", None)
 
-print(f'Seems like you like {cluster_dic[cluster_idx]} songs!')
-print("Here's some song recommendations for you!")
+    spotify = spotipy.Spotify(auth_manager=SpotifyClientCredentials(
+        client_id=client_id,
+        client_secret=client_secret)
+    )
 
-for song in recommended_songs:
-    print("*"*10)
-    print(f"Title: {song[0]}")
-    print(f"Artist: {song[1][1:-1]}")
-    print(f"Released date: {song[2]}")
+    songs = get_song_data(current_path + '/data.csv')
+
+    songs_features = retrieve_song_features(songs)
+
+    pipeline = train_pipeline(songs_features)
+
+    # joblib.dump(pipeline, 'trained_pipeline.pkl')
+
+    labeled_songs = label_songs(songs_features, pipeline)
+
+    cluster_dic = {0: 'upbeat', 1: 'decent', 2: 'mood', 3: 'unique', 4: 'club'}
+
+    recommended_songs, cluster_idx = recommend_songs(pipeline, songs, labeled_songs)
+
+    print(f'Seems like you like {cluster_dic[cluster_idx]} songs!')
+    print("Here's some song recommendations for you!")
+
+    for song in recommended_songs:
+        print("*" * 10)
+        print(f"Title: {song[0]}")
+        print(f"Artist: {song[1][1:-1]}")
+        print(f"Released date: {song[2]}")
